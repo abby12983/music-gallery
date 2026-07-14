@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>未来音乐坊 · 上传教学风采</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Helvetica Neue', sans-serif;
+      min-height: 100vh;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 30%, #f093fb 60%, #f5576c 100%);
+      background-size: 400% 400%;
+      animation: gradientShift 15s ease infinite;
+      color: #fff; overflow-x: hidden; -webkit-font-smoothing: antialiased;
+    }
+    @keyframes gradientShift { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
+    .music-notes{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0;overflow:hidden}
+    .note{position:absolute;font-size:24px;opacity:.15;animation:floatUp linear infinite}
+    @keyframes floatUp{0%{transform:translateY(100vh) rotate(0deg);opacity:0}10%{opacity:.15}90%{opacity:.15}100%{transform:translateY(-10vh) rotate(360deg);opacity:0}}
+    .container{position:relative;z-index:1;max-width:500px;margin:0 auto;padding:32px 24px 60px;min-height:100vh}
+    .hero-icon{width:80px;height:80px;border-radius:22px;background:rgba(255,255,255,.18);backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:center;font-size:40px;margin:0 auto 16px;box-shadow:0 8px 32px rgba(0,0,0,.1);animation:bounce 3s ease infinite}
+    @keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+    .hero-title{font-size:24px;font-weight:700;text-align:center;margin-bottom:6px;text-shadow:0 2px 10px rgba(0,0,0,.2);letter-spacing:1px}
+    .hero-subtitle{font-size:14px;text-align:center;opacity:.85;margin-bottom:28px;line-height:1.5}
+    .form-card{background:rgba(255,255,255,.13);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-radius:18px;padding:24px 20px;margin-bottom:16px;border:1px solid rgba(255,255,255,.18)}
+    .form-card-title{font-size:15px;font-weight:600;margin-bottom:20px;display:flex;align-items:center;gap:8px;color:rgba(255,255,255,.95)}
+    .form-group{margin-bottom:18px}
+    .form-label{display:block;font-size:13px;font-weight:600;margin-bottom:8px;color:rgba(255,255,255,.9)}
+    .required{color:#ffd93d}
+    .form-input,.form-select,.form-textarea{width:100%;padding:12px 14px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.2);border-radius:12px;color:#fff;font-size:15px;font-family:inherit;outline:none;transition:all .3s ease}
+    .form-input:focus,.form-select:focus,.form-textarea:focus{background:rgba(255,255,255,.22);border-color:rgba(255,255,255,.45);box-shadow:0 0 0 3px rgba(255,255,255,.08)}
+    .form-input::placeholder,.form-textarea::placeholder{color:rgba(255,255,255,.4)}
+    .form-select option{color:#333;background:#fff}
+    .form-textarea{resize:vertical;min-height:80px}
+    .category-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+    .category-btn{padding:12px 8px;background:rgba(255,255,255,.1);border:2px solid transparent;border-radius:12px;color:#fff;cursor:pointer;transition:all .3s ease;text-align:center;font-family:inherit}
+    .category-btn:hover{background:rgba(255,255,255,.18)}
+    .category-btn.selected{background:rgba(255,255,255,.25);border-color:rgba(255,255,255,.5)}
+    .category-btn .cat-emoji{font-size:22px;display:block;margin-bottom:4px}
+    .category-btn .cat-label{font-size:13px;font-weight:500}
+    .upload-area{position:relative;border:2px dashed rgba(255,255,255,.35);border-radius:14px;padding:28px 16px;text-align:center;cursor:pointer;transition:all .3s ease;background:rgba(255,255,255,.05)}
+    .upload-area:hover{border-color:rgba(255,255,255,.6);background:rgba(255,255,255,.1)}
+    .upload-area.dragover{border-color:#FFD93D;background:rgba(255,217,61,.1)}
+    .upload-icon{font-size:36px;margin-bottom:8px}
+    .upload-text{font-size:14px;font-weight:500;margin-bottom:4px}
+    .upload-hint{font-size:12px;color:rgba(255,255,255,.45)}
+    .upload-area input[type="file"]{position:absolute;top:0;left:0;width:100%;height:100%;opacity:0;cursor:pointer}
+    .preview-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
+    .preview-item{position:relative;aspect-ratio:1;border-radius:10px;overflow:hidden;background:rgba(255,255,255,.1)}
+    .preview-item img{width:100%;height:100%;object-fit:cover}
+    .remove-btn{position:absolute;top:4px;right:4px;width:24px;height:24px;border-radius:50%;background:rgba(0,0,0,.6);color:#fff;border:none;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1}
+    .video-preview-box{display:none;padding:12px;background:rgba(255,255,255,.1);border-radius:12px;margin-top:12px;align-items:center;gap:12px}
+    .video-preview-icon{font-size:32px;flex-shrink:0}
+    .video-preview-info{flex:1;min-width:0}
+    .video-preview-name{font-size:13px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .video-preview-size{font-size:12px;opacity:.6;margin-top:2px}
+    .video-preview-remove{flex-shrink:0;background:rgba(255,0,0,.3);border:none;color:#fff;width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:14px}
+    .submit-btn{width:100%;padding:18px;background:linear-gradient(135deg,#FFD93D,#FF6B35);border:none;border-radius:16px;color:#1a1a2e;font-size:18px;font-weight:700;cursor:pointer;transition:all .3s ease;box-shadow:0 8px 24px rgba(0,0,0,.2);letter-spacing:1px}
+    .submit-btn:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 12px 32px rgba(0,0,0,.3)}
+    .submit-btn:disabled{opacity:.5;cursor:not-allowed}
+    .progress-bar{display:none;margin-top:16px}
+    .progress-bar.active{display:block}
+    .progress-track{height:6px;background:rgba(255,255,255,.2);border-radius:3px;overflow:hidden}
+    .progress-fill{height:100%;background:#FFD93D;border-radius:3px;width:0%;transition:width .3s ease}
+    .progress-text{font-size:13px;margin-top:8px;text-align:center;opacity:.85}
+    .modal-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.5);z-index:100;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+    .modal-overlay.active{display:flex}
+    .modal-box{background:#1a1a2e;border-radius:20px;padding:32px 24px;text-align:center;max-width:360px;width:90%}
+    .modal-icon{font-size:48px;margin-bottom:12px}
+    .modal-title{font-size:20px;font-weight:700;margin-bottom:8px}
+    .modal-desc{font-size:14px;opacity:.7;margin-bottom:20px;line-height:1.6}
+    .modal-btn{display:inline-block;padding:14px 36px;background:linear-gradient(135deg,#FFD93D,#FF6B35);border:none;border-radius:14px;color:#1a1a2e;font-size:16px;font-weight:700;cursor:pointer}
+    .toast{position:fixed;top:24px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.85);color:#fff;padding:12px 24px;border-radius:12px;font-size:14px;z-index:200;animation:toastIn .3s ease;pointer-events:none;max-width:90%;text-align:center;word-break:break-word}
+    @keyframes toastIn{from{opacity:0;transform:translateX(-50%) translateY(-10px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+  </style>
+<script src="https://beacon.cdn.qq.com/sdk/4.5.9/beacon_web.min.js"></script>
+<script>
+(function(){
+  try{
+    var beacon=new BeaconAction({
+      appkey:'0WEB06U85YBSLJNL',
+      versionCode:'1.0.0',
+      channelID:'share',
+      delay:1000,
+      sessionDuration:30*60*1000,
+      isOversea:false,
+      needReportRqdEvent:false
+    });
+    beacon.onDirectUserAction('preview_page_view',{
+      'url':location.href,
+      'referrer':document.referrer,
+      'title':document.title,
+      'sandbox_id':'a103081a807f451f88e11bb4df3def03'
+    });
+  }catch(e){}
+})();
+</script></head>
+<body>
+<div class="music-notes" id="musicNotes"></div>
+<div class="container">
+  <div class="hero-icon">🎵</div>
+  <div class="hero-title">未来音乐坊</div>
+  <div class="hero-subtitle">分享各校教学风采，共同见证成长</div>
+
+  <!-- 学校 & 教师 -->
+  <div class="form-card">
+    <div class="form-card-title"><span>🏫</span> 学校信息</div>
+    <div class="form-group">
+      <label class="form-label"><span class="required">*</span> 学校名称</label>
+      <select class="form-select" id="schoolName" required>
+        <option value="">请选择学校</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label"><span class="required">*</span> 教师姓名</label>
+      <input type="text" class="form-input" id="teacherName" placeholder="请输入您的姓名" maxlength="20">
+    </div>
+  </div>
+
+  <!-- 活动信息 -->
+  <div class="form-card">
+    <div class="form-card-title"><span>📋</span> 活动信息</div>
+    <div class="form-group">
+      <label class="form-label"><span class="required">*</span> 活动类别</label>
+      <div class="category-grid" id="categoryGrid">
+        <button class="category-btn" data-cat="teaching"><span class="cat-emoji">📖</span><span class="cat-label">日常教学</span></button>
+        <button class="category-btn" data-cat="rehearsal"><span class="cat-emoji">🎤</span><span class="cat-label">合唱排练</span></button>
+        <button class="category-btn" data-cat="performance"><span class="cat-emoji">🎭</span><span class="cat-label">交流表演</span></button>
+        <button class="category-btn" data-cat="other"><span class="cat-emoji">✨</span><span class="cat-label">其他</span></button>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label"><span class="required">*</span> 活动日期</label>
+      <input type="date" class="form-input" id="activityDate">
+    </div>
+    <div class="form-group">
+      <label class="form-label"><span class="required">*</span> 活动描述</label>
+      <textarea class="form-textarea" id="activityDesc" placeholder="简单描述一下这次活动的情况..." maxlength="500"></textarea>
+    </div>
+  </div>
+
+  <!-- 上传照片 -->
+  <div class="form-card">
+    <div class="form-card-title"><span>📸</span> 上传照片（最多9张）</div>
+    <div class="upload-area" id="photoUploadArea">
+      <div class="upload-icon">🖼️</div>
+      <div class="upload-text">点击选择或拖拽照片</div>
+      <div class="upload-hint">支持 JPG、PNG 格式，单张最大 20MB</div>
+      <input type="file" id="photoInput" accept="image/*" multiple>
+    </div>
+    <div class="preview-grid" id="photoPreview"></div>
+  </div>
+
+  <!-- 视频上传 -->
+  <div class="form-card">
+    <div class="form-card-title"><span>🎬</span> 视频（可选）</div>
+    <div class="upload-area" id="videoUploadArea">
+      <div class="upload-icon">🎥</div>
+      <div class="upload-text">点击选择或拖拽视频文件</div>
+      <div class="upload-hint">支持 MP4、MOV 格式，最大 200MB</div>
+      <input type="file" id="videoInput" accept="video/*">
+    </div>
+    <div class="video-preview-box" id="videoPreview">
+      <div class="video-preview-icon">🎬</div>
+      <div class="video-preview-info">
+        <div class="video-preview-name" id="videoFileName"></div>
+        <div class="video-preview-size" id="videoFileSize"></div>
+      </div>
+      <button class="video-preview-remove" onclick="removeVideo()">×</button>
+    </div>
+    <div class="form-group" style="margin-bottom:0;margin-top:16px" id="videoLinkGroup">
+      <label class="form-label">视频链接（备选）</label>
+      <input type="url" class="form-input" id="videoLink" placeholder="粘贴腾讯视频/B站等视频链接">
+    </div>
+  </div>
+
+  <!-- 提交 -->
+  <button class="submit-btn" id="submitBtn" onclick="doSubmit()">
+    ✨ 提交分享
+  </button>
+
+  <!-- 进度条 -->
+  <div class="progress-bar" id="progressBar">
+    <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="progress-text" id="progressText">准备上传...</div>
+  </div>
+</div>
+
+<!-- 成功弹窗 -->
+<div class="modal-overlay" id="successModal">
+  <div class="modal-box" id="modalContent">
+    <div class="modal-icon">🎉</div>
+    <div class="modal-title">提交成功！</div>
+    <div class="modal-desc">感谢分享！各校老师都能在展示页看到你们的风采了！</div>
+    <button class="modal-btn" onclick="resetForm()">继续上传</button>
+  </div>
+</div>
+
+<script>
+// ===== Configuration =====
+var API    = '/api';
+var DIRECT_MAX = 2 * 1024 * 1024;  // Files <= 2MB: direct upload
+var CHUNK_SIZE  = 2 * 1024 * 1024; // Chunk size: 2MB (reduces chunk count, avoids OOM)
+
+// ===== Schools (24所项目学校) =====
+var SCHOOLS = [
+  // 内蒙古·赤峰
+  {name:"松山区安庆北道小学", region:"内蒙古·赤峰", teacher:""},
+  {name:"罕乌拉小学", region:"内蒙古·赤峰", teacher:""},
+  // 内蒙古·锡林郭勒
+  {name:"锡林浩特市第十一小学", region:"内蒙古·锡林郭勒", teacher:""},
+  // 内蒙古·兴安盟
+  {name:"扎木钦中心校", region:"内蒙古·兴安盟", teacher:""},
+  {name:"代钦塔拉中心校", region:"内蒙古·兴安盟", teacher:""},
+  {name:"科尔沁右翼前旗第一小学", region:"内蒙古·兴安盟", teacher:""},
+  {name:"科尔沁右翼前旗满族屯学校", region:"内蒙古·兴安盟", teacher:""},
+  {name:"阿尔山市第一小学", region:"内蒙古·兴安盟", teacher:""},
+  // 内蒙古·呼和浩特
+  {name:"盛乐镇小学", region:"内蒙古·呼和浩特", teacher:""},
+  // 云南·曲靖
+  {name:"陆良县马街镇漾稻小学", region:"云南·曲靖", teacher:""},
+  {name:"陆良县马街镇贞元堡小学", region:"云南·曲靖", teacher:""},
+  // 云南·昭通
+  {name:"火德红镇中心小学", region:"云南·昭通", teacher:""},
+  {name:"鲁甸县龙头山镇光明小学", region:"云南·昭通", teacher:""},
+  // 云南·普洱
+  {name:"芒景村小学", region:"云南·普洱", teacher:""},
+  // 云南·文山
+  {name:"砚山县第三小学", region:"云南·文山", teacher:""},
+  // 四川·阿坝
+  {name:"汶川县灞州小学校", region:"四川·阿坝", teacher:""},
+  // 广东·清远
+  {name:"连南瑶族自治县民族小学", region:"广东·清远", teacher:""},
+  // 广东·汕尾
+  {name:"陆河县河田镇城北小学", region:"广东·汕尾", teacher:""},
+  // 广东·深汕
+  {name:"深汕特别合作区小漠中心小学", region:"广东·深汕", teacher:""},
+  {name:"鲘门中心小学", region:"广东·深汕", teacher:""},
+  // 西藏·林芝
+  {name:"察瓦龙乡中心小学", region:"西藏·林芝", teacher:""},
+  {name:"墨脱县完全小学", region:"西藏·林芝", teacher:""},
+  // 新疆·喀什
+  {name:"喀什市二十七小学", region:"新疆·喀什", teacher:""},
+  {name:"喀什市第四十七中学（小学部）", region:"新疆·喀什", teacher:""}
+];
+
+// ===== Init =====
+(function(){
+  var sel = document.getElementById('schoolName');
+  SCHOOLS.forEach(function(s){
+    var o = document.createElement('option');
+    o.value = s.name; o.textContent = s.name + ' (' + s.region + ')';
+    sel.appendChild(o);
+  });
+  document.getElementById('activityDate').valueAsDate = new Date();
+})();
+
+// ===== XHR wrapper (more reliable than fetch for large payloads) =====
+function api(method, path, body, timeoutSec) {
+  timeoutSec = timeoutSec || 60;
+  return new Promise(function(resolve, reject) {
+    var xhr = new XMLHttpRequest();
+    xhr.open(method, API + path, true);
+    xhr.setRequestHeader('Content-Type', 'application/json');
+    xhr.timeout = timeoutSec * 1000;
+    
+    xhr.onload = function() {
+      try {
+        var data = JSON.parse(xhr.responseText);
+        if (data.success) resolve(data);
+        else reject(new Error(data.message || ('HTTP ' + xhr.status)));
+      } catch(e) {
+        reject(new Error('响应解析失败 (status=' + xhr.status + ')'));
+      }
+    };
+    
+    xhr.onerror = function() {
+      reject(new Error('网络连接失败，请检查网络后重试'));
+    };
+    
+    xhr.ontimeout = function() {
+      reject(new Error('上传超时（' + timeoutSec + '秒），文件可能较大，请重试'));
+    };
+    
+    xhr.send(body ? JSON.stringify(body) : null);
+  });
+}
+
+// ===== File reading =====
+function readFileAsDataURL(file) {
+  return new Promise(function(ok, fail) {
+    var r = new FileReader();
+    r.onload = function(e) { ok(e.target.result); };
+    r.onerror = function() { fail(new Error('文件读取失败')); };
+    r.readAsDataURL(file);
+  });
+}
+
+function readChunkAsDataURL(file, start, len) {
+  return new Promise(function(ok, fail) {
+    var sl = file.slice(start, start + len);
+    var r = new FileReader();
+    r.onload = function(e) { ok(e.target.result); };
+    r.onerror = function() { fail(new Error('分块读取失败')); };
+    r.readAsDataURL(sl);
+  });
+}
+
+// ===== Upload logic =====
+// Direct upload (for small files <= 2MB)
+async function uploadDirect(file) {
+  var sz = (file.size/1024/1024).toFixed(1);
+  setProgress('正在上传 ' + file.name + ' (' + sz + 'MB)...', 5);
+  var b64 = await readFileAsDataURL(file);
+  var d = await api('POST', '/api/upload-file', { fileName: file.name, fileData: b64 }, 120);
+  return d.file;
+}
+
+// Chunked upload (for large files > 2MB)
+async function uploadChunked(file) {
+  var totalChunks = Math.ceil(file.size / CHUNK_SIZE);
+  var sz = (file.size/1024/1024).toFixed(1);
+  setProgress('准备分块上传 ' + file.name + ' (' + sz + 'MB)...', 2);
+
+  // Start session
+  var s = await api('POST', '/api/chunked-upload/start', {
+    fileName: file.name,
+    totalChunks: totalChunks
+  }, 30);
+  var sid = s.sessionId;
+
+  // Upload each chunk
+  for (var i = 0; i < totalChunks; i++) {
+    var pct = 2 + Math.round((i / totalChunks) * 80);
+    setProgress('正在上传 ' + file.name + ' 第 ' + (i+1) + '/' + totalChunks + ' 块...', pct);
+    
+    var b64 = await readChunkAsDataURL(file, i * CHUNK_SIZE, CHUNK_SIZE);
+    
+    for (var retry = 0; retry < 3; retry++) {
+      try {
+        await api('POST', '/api/chunked-upload/chunk', {
+          sessionId: sid,
+          chunkIndex: i,
+          data: b64
+        }, 60);
+        break;
+      } catch(e) {
+        if (retry === 2) throw e;
+        setProgress('重试第 ' + (i+1) + ' 块 (' + (retry+2) + '/3)...', pct);
+        await new Promise(function(r){setTimeout(r, 1000)});
+      }
+    }
+  }
+
+  // Complete
+  setProgress('正在保存 ' + file.name + '...', 90);
+  var c = await api('POST', '/api/chunked-upload/complete', { sessionId: sid }, 120);
+  return c.file;
+}
+
+// Auto-select upload method
+async function uploadFile(file) {
+  if (file.size <= DIRECT_MAX) {
+    return await uploadDirect(file);
+  } else {
+    return await uploadChunked(file);
+  }
+}
+
+// ===== Photo UI =====
+var photoFiles = [];
+var pInput = document.getElementById('photoInput');
+var pPrev  = document.getElementById('photoPreview');
+var pArea  = document.getElementById('photoUploadArea');
+
+pInput.addEventListener('change', function(e){ addPhotos(Array.from(e.target.files)); });
+pArea.addEventListener('dragover', function(e){ e.preventDefault(); pArea.classList.add('dragover'); });
+pArea.addEventListener('dragleave', function(){ pArea.classList.remove('dragover'); });
+pArea.addEventListener('drop', function(e){
+  e.preventDefault(); pArea.classList.remove('dragover');
+  addPhotos(Array.from(e.dataTransfer.files).filter(function(f){return f.type.startsWith('image/')}));
+});
+
+function addPhotos(files) {
+  var left = 9 - photoFiles.length;
+  if (left <= 0) { toast('最多上传9张照片'); return; }
+  for (var i = 0; i < Math.min(files.length, left); i++) {
+    if (files[i].size > 20*1024*1024) { toast('单张照片不超过20MB'); continue; }
+    photoFiles.push(files[i]);
+  }
+  renderPhotos();
+}
+
+function removePhoto(i) { photoFiles.splice(i, 1); renderPhotos(); }
+
+function renderPhotos() {
+  pPrev.innerHTML = '';
+  photoFiles.forEach(function(f, i) {
+    var d = document.createElement('div'); d.className = 'preview-item';
+    d.innerHTML = '<img src="' + URL.createObjectURL(f) + '"><button class="remove-btn" onclick="removePhoto('+i+')">\u00d7</button>';
+    pPrev.appendChild(d);
+  });
+}
+
+// ===== Video UI =====
+var videoFile = null;
+var vInput = document.getElementById('videoInput');
+var vArea  = document.getElementById('videoUploadArea');
+var vPrev  = document.getElementById('videoPreview');
+
+vInput.addEventListener('change', function(e){ if(e.target.files[0]) addVideo(e.target.files[0]); });
+vArea.addEventListener('dragover', function(e){ e.preventDefault(); vArea.classList.add('dragover'); });
+vArea.addEventListener('dragleave', function(){ vArea.classList.remove('dragover'); });
+vArea.addEventListener('drop', function(e){
+  e.preventDefault(); vArea.classList.remove('dragover');
+  var fs = Array.from(e.dataTransfer.files).filter(function(f){return f.type.startsWith('video/')});
+  if (fs[0]) addVideo(fs[0]);
+});
+
+function addVideo(f) {
+  if (f.size > 200*1024*1024) { toast('视频不超过200MB，建议使用链接'); return; }
+  videoFile = f;
+  vArea.style.display = 'none';
+  vPrev.style.display = 'flex';
+  document.getElementById('videoFileName').textContent = f.name;
+  document.getElementById('videoFileSize').textContent = (f.size/1024/1024).toFixed(1) + ' MB';
+  document.getElementById('videoLink').value = '';
+}
+
+function removeVideo() {
+  videoFile = null;
+  vArea.style.display = '';
+  vPrev.style.display = 'none';
+  vInput.value = '';
+}
+
+// ===== State =====
+var selectedCategory = '';
+
+document.getElementById('categoryGrid').addEventListener('click', function(e){
+  var btn = e.target.closest('.category-btn');
+  if (!btn) return;
+  document.querySelectorAll('.category-btn').forEach(function(b){b.classList.remove('selected')});
+  btn.classList.add('selected');
+  selectedCategory = btn.dataset.cat;
+});
+
+// ===== Submit =====
+async function doSubmit() {
+  var school  = document.getElementById('schoolName').value;
+  var teacher = document.getElementById('teacherName').value.trim();
+  var date    = document.getElementById('activityDate').value;
+  var desc    = document.getElementById('activityDesc').value.trim();
+  var vlink   = document.getElementById('videoLink').value.trim();
+
+  if (!school)  return toast('请选择学校');
+  if (!teacher) return toast('请输入姓名');
+  if (!selectedCategory) return toast('请选择类别');
+  if (!date)    return toast('请选择日期');
+  if (!desc)    return toast('请输入活动描述');
+  if (!photoFiles.length && !videoFile && !vlink) return toast('请至少上传照片或视频');
+
+  btnState(true);
+  showProgress();
+
+  var photos = [], video = null;
+
+  try {
+    // Upload photos
+    for (var i = 0; i < photoFiles.length; i++) {
+      setProgress('正在上传第 ' + (i+1) + ' 张照片...', 5 + Math.round((i/photoFiles.length) * 25));
+      var r = await uploadFile(photoFiles[i]);
+      photos.push({ name: r.name, fileID: r.fileID, url: r.url });
+    }
+
+    // Upload video
+    if (videoFile) {
+      var v = await uploadFile(videoFile);
+      video = { name: v.name, fileID: v.fileID, url: v.url };
+      setProgress('视频上传完成!', 85);
+    }
+
+    // Save metadata
+    setProgress('正在保存信息...', 92);
+    await api('POST', '/api/submissions', {
+      schoolName: school + '|' + teacher,
+      teacherName: teacher,
+      category: selectedCategory,
+      activityDate: date,
+      activityDesc: desc,
+      videoLink: vlink,
+      photos: photos,
+      video: video
+    }, 30);
+
+    setProgress('上传完成!', 100);
+    setTimeout(function(){
+      document.getElementById('successModal').classList.add('active');
+      resetUI();
+    }, 400);
+
+  } catch(e) {
+    console.error('Upload error:', e);
+    toast('上传失败：' + (e.message || '未知错误'));
+    resetUI();
+  }
+}
+
+function resetForm() {
+  document.getElementById('successModal').classList.remove('active');
+  document.getElementById('uploadForm').reset();
+  document.getElementById('activityDate').valueAsDate = new Date();
+  document.querySelectorAll('.category-btn').forEach(function(b){b.classList.remove('selected')});
+  selectedCategory = '';
+  photoFiles = [];
+  pPrev.innerHTML = '';
+  removeVideo();
+  resetUI();
+}
+
+// ===== UI helpers =====
+function btnState(disabled) {
+  var btn = document.getElementById('submitBtn');
+  btn.disabled = disabled;
+  btn.textContent = disabled ? '上传中...' : '✨ 提交分享';
+}
+
+function showProgress() {
+  document.getElementById('progressBar').classList.add('active');
+}
+
+function hideProgress() {
+  document.getElementById('progressBar').classList.remove('active');
+}
+
+function setProgress(text, pct) {
+  document.getElementById('progressText').textContent = text;
+  document.getElementById('progressFill').style.width = pct + '%';
+}
+
+function resetUI() {
+  btnState(false);
+  hideProgress();
+  setProgress('', 0);
+}
+
+function toast(msg) {
+  var t = document.createElement('div');
+  t.className = 'toast';
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(function(){ t.remove(); }, 3500);
+}
+
+// ===== Floating notes =====
+(function(){
+  var nts = ['\u266a','\u266b','\u266c','\u2669','\ud83c\udfb5','\ud83c\udfb6'];
+  var c = document.getElementById('musicNotes');
+  function mk() {
+    var n = document.createElement('div'); n.className = 'note';
+    n.textContent = nts[Math.floor(Math.random()*nts.length)];
+    n.style.left = Math.random()*100+'%';
+    n.style.fontSize = (16+Math.random()*24)+'px';
+    n.style.animationDuration = (8+Math.random()*12)+'s';
+    n.style.setProperty('animation-delay', Math.random()*5+'s');
+    c.appendChild(n);
+    setTimeout(function(){n.remove()}, 25000);
+  }
+  for (var i=0;i<12;i++) setTimeout(mk, i*800);
+  setInterval(mk, 3000);
+})();
+</script>
+</body>
+</html>
