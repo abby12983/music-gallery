@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>未来音乐坊 · 管理后台</title>
+  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap');
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --primary: #FF6B6B; --primary-light: #FFE8E8; --secondary: #4ECDC4;
+      --accent: #FFD93D; --bg: #FAFBFE; --card-bg: #FFFFFF;
+      --text: #2D3436; --text-light: #636E72; --text-muted: #B2BEC3;
+      --danger: #e74c3c; --success: #27ae60; --warning: #f39c12;
+      --shadow: 0 2px 16px rgba(0,0,0,0.06);
+      --radius: 14px;
+    }
+    body { font-family: 'Noto Sans SC', -apple-system, sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; min-height: 100vh; }
+    .header { background: linear-gradient(135deg, #FF6B6B 0%, #4ECDC4 50%, #FFD93D 100%); padding: 32px 24px 40px; text-align: center; position: relative; overflow: hidden; }
+    .header::before { content: ''; position: absolute; top: -30%; right: -15%; width: 400px; height: 400px; background: rgba(255,255,255,0.08); border-radius: 50%; }
+    .header h1 { color: white; font-size: 26px; font-weight: 700; position: relative; z-index: 1; text-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+    .header p { color: rgba(255,255,255,0.85); font-size: 14px; margin-top: 6px; position: relative; z-index: 1; }
+    .container { max-width: 1100px; margin: 0 auto; padding: 24px; }
+    .login-box { background: var(--card-bg); border-radius: var(--radius); box-shadow: var(--shadow); padding: 40px; max-width: 400px; margin: -20px auto 0; position: relative; z-index: 10; text-align: center; }
+    .login-box input { width: 100%; padding: 12px 16px; border: 1.5px solid #E8ECF0; border-radius: 10px; font-size: 15px; outline: none; transition: border 0.3s; font-family: inherit; text-align: center; }
+    .login-box input:focus { border-color: var(--primary); }
+    .login-box button { width: 100%; margin-top: 12px; padding: 12px; background: linear-gradient(135deg, var(--primary), var(--secondary)); border: none; border-radius: 10px; color: white; font-size: 16px; font-weight: 600; cursor: pointer; font-family: inherit; transition: transform 0.2s; }
+    .login-box button:hover { transform: translateY(-1px); }
+    .login-error { color: var(--danger); font-size: 13px; margin-top: 8px; display: none; }
+    .panel { display: none; }
+    .panel.active { display: block; }
+    .stats { display: flex; gap: 16px; margin-bottom: 24px; flex-wrap: wrap; }
+    .stat-card { flex: 1; min-width: 140px; background: var(--card-bg); border-radius: var(--radius); box-shadow: var(--shadow); padding: 18px 20px; text-align: center; }
+    .stat-card .num { font-size: 28px; font-weight: 700; color: var(--primary); }
+    .stat-card .lbl { font-size: 13px; color: var(--text-muted); margin-top: 4px; }
+    .toolbar { display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
+    .toolbar button { padding: 8px 20px; border-radius: 20px; border: 1.5px solid #E8ECF0; background: white; cursor: pointer; font-family: inherit; font-size: 13px; transition: all 0.2s; }
+    .toolbar button:hover { border-color: var(--primary); color: var(--primary); }
+    .toolbar button.danger { border-color: var(--danger); color: var(--danger); }
+    .toolbar button.danger:hover { background: var(--danger); color: white; }
+    .table-wrap { background: var(--card-bg); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 12px 16px; text-align: left; font-size: 14px; }
+    th { background: #F8F9FC; font-weight: 600; color: var(--text-light); border-bottom: 1px solid #EEE; white-space: nowrap; }
+    td { border-bottom: 1px solid #F0F2F5; }
+    tr:hover td { background: #FAFAFE; }
+    .tag { display: inline-block; padding: 2px 10px; border-radius: 10px; font-size: 12px; font-weight: 500; }
+    .tag-teaching { background: #E3F2FD; color: #1565C0; }
+    .tag-rehearsal { background: #FFF3E0; color: #E65100; }
+    .tag-performance { background: #FCE4EC; color: #C62828; }
+    .tag-other { background: #F3E5F5; color: #6A1B9A; }
+    .btn-del { padding: 4px 14px; border-radius: 14px; border: 1px solid var(--danger); background: white; color: var(--danger); cursor: pointer; font-size: 12px; font-family: inherit; transition: all 0.2s; }
+    .btn-del:hover { background: var(--danger); color: white; }
+    .btn-dl { padding: 4px 10px; border-radius: 14px; border: 1px solid var(--secondary); background: white; color: var(--secondary); cursor: pointer; font-size: 11px; font-family: inherit; transition: all 0.2s; text-decoration: none; display: inline-block; margin: 1px; }
+    .btn-dl:hover { background: var(--secondary); color: white; }
+    .empty { text-align: center; padding: 40px; color: var(--text-muted); font-size: 14px; }
+    /* Monthly Summary */
+    .summary-title { font-size: 16px; font-weight: 600; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+    .month-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; margin-bottom: 20px; }
+    .month-card { background: var(--card-bg); border-radius: 10px; box-shadow: var(--shadow); padding: 14px 16px; border-left: 4px solid var(--primary); }
+    .month-card .mth { font-size: 13px; font-weight: 600; color: var(--primary); margin-bottom: 6px; }
+    .month-card .mth-stats { display: flex; gap: 12px; flex-wrap: wrap; font-size: 12px; color: var(--text-light); }
+    .month-card .mth-stats span { white-space: nowrap; }
+    .export-btn { padding: 8px 20px; border-radius: 20px; border: 1.5px solid var(--success); background: white; color: var(--success); cursor: pointer; font-family: inherit; font-size: 13px; font-weight: 500; transition: all 0.2s; }
+    .export-btn:hover { background: var(--success); color: white; }
+    .photo-links { display: flex; flex-wrap: wrap; gap: 2px; }
+    /* Summary Tabs */
+    .summary-tabs { display: flex; gap: 0; margin-bottom: 0; border-bottom: 2px solid #EEE; }
+    .summary-tab { padding: 8px 18px; cursor: pointer; font-size: 13px; font-weight: 500; color: var(--text-muted); border: none; background: none; border-bottom: 2px solid transparent; margin-bottom: -2px; transition: all 0.2s; font-family: inherit; }
+    .summary-tab:hover { color: var(--primary); }
+    .summary-tab.active { color: var(--primary); border-bottom-color: var(--primary); }
+    .summary-panel { display: none; margin-top: 0; }
+    .summary-panel.active { display: block; }
+    .cat-row, .school-row { display: flex; align-items: center; padding: 10px 14px; background: var(--card-bg); border-radius: 8px; margin-bottom: 6px; gap: 14px; font-size: 13px; box-shadow: 0 1px 4px rgba(0,0,0,0.04); }
+    .cat-row .cat-label, .school-row .sch-label { min-width: 100px; font-weight: 600; color: var(--text); }
+    .cat-row .cat-bar-wrap, .school-row .sch-bar-wrap { flex: 1; display: flex; align-items: center; gap: 8px; }
+    .cat-row .cat-bar, .school-row .sch-bar { height: 22px; border-radius: 11px; min-width: 4px; transition: width 0.4s; }
+    .cat-row .cat-count, .school-row .sch-count { font-weight: 600; font-size: 13px; min-width: 40px; text-align: right; color: var(--text); }
+    .zip-btn { padding: 6px 12px; border-radius: 14px; border: 1px solid var(--warning); background: white; color: var(--warning); cursor: pointer; font-size: 11px; font-family: inherit; transition: all 0.2s; white-space: nowrap; }
+    .zip-btn:hover { background: var(--warning); color: white; }
+    .zip-btn-all { padding: 8px 20px; border-radius: 20px; border: 1.5px solid var(--warning); background: white; color: var(--warning); cursor: pointer; font-family: inherit; font-size: 13px; font-weight: 500; transition: all 0.2s; }
+    .zip-btn-all:hover { background: var(--warning); color: white; }
+    .zip-btn-all:disabled { opacity: 0.5; cursor: not-allowed; }
+    .toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.85); color: white; padding: 10px 22px; border-radius: 10px; font-size: 14px; z-index: 200; animation: fadeIn 0.3s; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateX(-50%) translateY(-10px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
+    .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); z-index: 100; align-items: center; justify-content: center; }
+    .modal-overlay.active { display: flex; }
+    .modal-box { background: white; border-radius: 16px; padding: 28px 24px; max-width: 360px; width: 90%; text-align: center; }
+    .modal-box h3 { margin-bottom: 12px; }
+    .modal-box p { font-size: 14px; color: var(--text-light); margin-bottom: 20px; }
+    .modal-btns { display: flex; gap: 10px; justify-content: center; }
+    .modal-btns button { padding: 10px 24px; border-radius: 20px; border: none; cursor: pointer; font-size: 14px; font-weight: 500; font-family: inherit; }
+    .modal-btns .btn-cancel { background: #F0F2F5; color: var(--text-light); }
+    .modal-btns .btn-confirm { background: var(--danger); color: white; }
+    @media (max-width: 768px) { th, td { padding: 8px 10px; font-size: 13px; } }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <h1>📋 未来音乐坊 · 管理后台</h1>
+  <p>查看和管理各校提交的教学风采内容</p>
+</div>
+
+<div class="container">
+  <!-- Login -->
+  <div class="login-box" id="loginBox">
+    <h3 style="margin-bottom:16px;color:var(--text-light);">请输入管理密码</h3>
+    <input type="password" id="pwdInput" placeholder="请输入密码" onkeydown="if(event.key==='Enter')login()">
+    <button onclick="login()">进入后台</button>
+    <div class="login-error" id="loginError">密码错误，请重试</div>
+  </div>
+
+  <!-- Panel -->
+  <div class="panel" id="panel">
+    <div class="stats" id="statsBar"></div>
+    <!-- Monthly Summary -->
+    <div class="summary-title">📊 月度汇总</div>
+    <div class="month-grid" id="monthlySummary"><span style="color:var(--text-muted);font-size:13px;">加载中...</span></div>
+    <!-- Category & School Summary -->
+    <div class="summary-tabs">
+      <button class="summary-tab active" onclick="switchSummaryTab('category')">📂 按类别汇总</button>
+      <button class="summary-tab" onclick="switchSummaryTab('school')">🏫 按学校汇总</button>
+    </div>
+    <div class="summary-panel active" id="summaryCategory"><span style="color:var(--text-muted);font-size:13px;">加载中...</span></div>
+    <div class="summary-panel" id="summarySchool"><span style="color:var(--text-muted);font-size:13px;">加载中...</span></div>
+    <div class="toolbar">
+      <span style="font-size:14px;font-weight:500;">提交记录</span>
+      <button class="export-btn" onclick="exportCSV()">📥 导出表单</button>
+      <button class="zip-btn-all" id="zipAllBtn" onclick="downloadAllAttachments()">📦 打包全部附件</button>
+      <button onclick="loadSubmissions()" style="margin-left:auto;">🔄 刷新</button>
+      <button class="danger" onclick="confirmClearAll()">🗑️ 清空全部</button>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th>学校</th><th>教师</th><th>类别</th><th>日期</th><th>描述</th><th>照片</th><th>视频</th><th>时间</th><th>下载</th><th>操作</th>
+        </tr></thead>
+        <tbody id="tableBody"><tr><td colspan="10" class="empty">加载中...</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Delete Confirm Modal -->
+<div class="modal-overlay" id="deleteModal">
+  <div class="modal-box">
+    <h3>⚠️ 确认删除</h3>
+    <p id="deleteMsg">确定要删除这条记录吗？此操作不可撤销！</p>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeModal()">取消</button>
+      <button class="btn-confirm" id="deleteConfirmBtn" onclick="doDelete()">确认删除</button>
+    </div>
+  </div>
+</div>
+
+<script>
+var API = '/api';
+var PASSWORD = 'music2026';
+var submissions = [];
+var deleteTargetId = null;
+var TAG_MAP = { teaching: '🎵 教学', rehearsal: '🎤 排练', performance: '🎭 表演', other: '✨ 其他' };
+var TAG_CLS = { teaching: 'tag-teaching', rehearsal: 'tag-rehearsal', performance: 'tag-performance', other: 'tag-other' };
+
+function toast(m) { var t = document.createElement('div'); t.className = 'toast'; t.textContent = m; document.body.appendChild(t); setTimeout(function(){ t.remove(); }, 3000); }
+
+function login() {
+  var pwd = document.getElementById('pwdInput').value;
+  if (pwd === PASSWORD) {
+    document.getElementById('loginBox').style.display = 'none';
+    document.getElementById('panel').classList.add('active');
+    loadSubmissions();
+  } else {
+    document.getElementById('loginError').style.display = 'block';
+  }
+}
+
+async function loadSubmissions() {
+  var tbody = document.getElementById('tableBody');
+  tbody.innerHTML = '<tr><td colspan="10" class="empty">加载中...</td></tr>';
+  try {
+    var resp = await fetch(API + '/api/submissions');
+    var data = await resp.json();
+    if (!data.success) throw new Error(data.message || '加载失败');
+    submissions = data.submissions || [];
+    renderStats();
+    renderTable();
+  } catch(e) {
+    tbody.innerHTML = '<tr><td colspan="10" class="empty" style="color:#e74c3c;">加载失败：' + e.message + '</td></tr>';
+  }
+}
+
+function renderStats() {
+  var totalSchools = new Set(submissions.map(function(s){ return (s.schoolName||'').split('|')[0].trim(); })).size;
+  var totalPhotos = 0, totalVideos = 0;
+  submissions.forEach(function(s) {
+    totalPhotos += (s.photos||[]).length;
+    if (s.video || s.videoLink) totalVideos++;
+  });
+  document.getElementById('statsBar').innerHTML =
+    '<div class="stat-card"><div class="num">' + submissions.length + '</div><div class="lbl">提交记录</div></div>' +
+    '<div class="stat-card"><div class="num">' + totalSchools + '</div><div class="lbl">参与学校</div></div>' +
+    '<div class="stat-card"><div class="num">' + totalPhotos + '</div><div class="lbl">照片总数</div></div>' +
+    '<div class="stat-card"><div class="num">' + totalVideos + '</div><div class="lbl">视频总数</div></div>';
+  renderMonthlySummary();
+  renderCategorySummary();
+  renderSchoolSummary();
+}
+
+function renderTable() {
+  var tbody = document.getElementById('tableBody');
+  if (!submissions.length) { tbody.innerHTML = '<tr><td colspan="10" class="empty">暂无提交记录</td></tr>'; return; }
+  tbody.innerHTML = '';
+  submissions.forEach(function(s) {
+    var parts = (s.schoolName||'').split('|');
+    var school = parts[0].trim();
+    var teacher = parts[1] ? parts[1].trim() : (s.teacherName || '');
+    var cat = TAG_MAP[s.category] || s.category || '';
+    var catCls = TAG_CLS[s.category] || 'tag-other';
+    var date = s.activityDate || '';
+    var desc = (s.activityDesc||'').substring(0, 30) + (s.activityDesc&&s.activityDesc.length>30?'...':'');
+    var time = s.createdAt ? new Date(s.createdAt).toLocaleString('zh-CN') : '';
+
+    // Build photo download links
+    var photoHtml = '';
+    if (s.photos && s.photos.length > 0) {
+      photoHtml = '<div class="photo-links">';
+      s.photos.forEach(function(p, idx) {
+        var url = p.url || '';
+        if (url) {
+          photoHtml += '<a class="btn-dl" href="' + url + '" download="' + (p.name || ('photo_'+(idx+1))) + '" target="_blank" title="下载照片' + (idx+1) + '">📷' + (idx+1) + '</a>';
+        }
+      });
+      photoHtml += '</div>';
+    } else {
+      photoHtml = '—';
+    }
+
+    // Build video download link
+    var videoHtml = '—';
+    if (s.video && s.video.url) {
+      videoHtml = '<a class="btn-dl" href="' + s.video.url + '" download="' + (s.video.name || 'video') + '" target="_blank" title="下载视频">⬇️ ' + (s.video.name ? s.video.name.substring(0,10) : '视频') + '</a>';
+    } else if (s.videoLink) {
+      videoHtml = '<a class="btn-dl" href="' + s.videoLink + '" target="_blank" title="查看外部视频">🔗 链接</a>';
+    }
+
+    var tr = document.createElement('tr');
+    tr.innerHTML =
+      '<td>' + school + '</td>' +
+      '<td>' + teacher + '</td>' +
+      '<td><span class="tag ' + catCls + '">' + cat + '</span></td>' +
+      '<td>' + date + '</td>' +
+      '<td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + desc + '</td>' +
+      '<td>' + photoHtml + '</td>' +
+      '<td>' + videoHtml + '</td>' +
+      '<td style="font-size:12px;color:#999;">' + time + '</td>' +
+      '<td><button class="zip-btn" onclick="downloadRowZip(' + submissions.indexOf(s) + ')" title="打包下载本条附件">📦</button></td>' +
+      '<td><button class="btn-del" onclick="confirmDelete(\'' + (s.id||s._id) + '\')">删除</button></td>';
+    tbody.appendChild(tr);
+  });
+}
+
+function confirmDelete(id) {
+  deleteTargetId = id;
+  document.getElementById('deleteMsg').textContent = '确定要删除这条记录吗？此操作不可撤销！';
+  document.getElementById('deleteModal').classList.add('active');
+}
+
+function closeModal() { document.getElementById('deleteModal').classList.remove('active'); deleteTargetId = null; }
+
+async function doDelete() {
+  if (!deleteTargetId) return;
+  try {
+    var resp = await fetch(API + '/api/admin/cleanup', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'delete-one', id: deleteTargetId })
+    });
+    var data = await resp.json();
+    if (data.success) { toast('✅ 删除成功'); loadSubmissions(); }
+    else { toast('删除失败：' + (data.message||'未知错误')); }
+  } catch(e) { toast('删除失败：' + e.message); }
+  closeModal();
+}
+
+function confirmClearAll() {
+  if (submissions.length === 0) { toast('没有可删除的记录'); return; }
+  document.getElementById('deleteMsg').textContent = '确定清空全部 ' + submissions.length + ' 条记录吗？此操作不可撤销！';
+  document.getElementById('deleteModal').classList.add('active');
+  // Override one-time
+  document.getElementById('deleteConfirmBtn').onclick = async function() {
+    try {
+      var resp = await fetch(API + '/api/admin/cleanup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'delete-all' })
+      });
+      var data = await resp.json();
+      if (data.success) { toast('✅ 已清空 ' + (data.deleted||submissions.length) + ' 条记录'); }
+      else { toast('清空失败：' + (data.message||'未知错误')); }
+      loadSubmissions();
+    } catch(e) { toast('清空失败：' + e.message); }
+    closeModal();
+  };
+}
+
+// ===== Monthly Summary =====
+function renderMonthlySummary() {
+  var container = document.getElementById('monthlySummary');
+  if (!submissions.length) {
+    container.innerHTML = '<span style="color:var(--text-muted);font-size:13px;">暂无数据</span>';
+    return;
+  }
+
+  // Group by YYYY-MM
+  var months = {};
+  submissions.forEach(function(s) {
+    var m = '';
+    if (s.activityDate) {
+      m = s.activityDate.substring(0, 7); // YYYY-MM
+    } else if (s.createdAt) {
+      m = s.createdAt.substring(0, 7);
+    }
+    if (!m) m = '未知月份';
+    if (!months[m]) months[m] = [];
+    months[m].push(s);
+  });
+
+  // Sort months descending
+  var keys = Object.keys(months).sort().reverse();
+
+  container.innerHTML = '';
+  keys.forEach(function(m) {
+    var items = months[m];
+    var schools = new Set();
+    var photos = 0, videos = 0;
+    items.forEach(function(s) {
+      var schoolName = (s.schoolName||'').split('|')[0].trim();
+      if (schoolName) schools.add(schoolName);
+      photos += (s.photos||[]).length;
+      if (s.video || s.videoLink) videos++;
+    });
+
+    var card = document.createElement('div');
+    card.className = 'month-card';
+    card.innerHTML =
+      '<div class="mth">📅 ' + m + '</div>' +
+      '<div class="mth-stats">' +
+        '<span>📋 ' + items.length + ' 条记录</span>' +
+        '<span>🏫 ' + schools.size + ' 所学校</span>' +
+        '<span>📷 ' + photos + ' 照片</span>' +
+        '<span>🎬 ' + videos + ' 视频</span>' +
+      '</div>';
+    container.appendChild(card);
+  });
+}
+
+// ===== CSV Export =====
+function exportCSV() {
+  if (!submissions.length) { toast('没有数据可导出'); return; }
+
+  // CSV header
+  var rows = [['学校', '教师', '类别', '活动日期', '活动描述', '照片数', '视频', '视频链接', '提交时间']];
+
+  var catMap = { teaching: '日常教学', rehearsal: '合唱排练', performance: '交流表演', other: '其他' };
+
+  submissions.forEach(function(s) {
+    var parts = (s.schoolName||'').split('|');
+    var school = parts[0].trim();
+    var teacher = parts[1] ? parts[1].trim() : (s.teacherName || '');
+    var cat = catMap[s.category] || s.category || '';
+    var photos = (s.photos||[]).length;
+    var video = s.video ? '有' : '无';
+    var videolink = s.videoLink || '';
+    var date = s.activityDate || '';
+    var desc = (s.activityDesc||'').replace(/"/g, '""');
+    var time = s.createdAt || '';
+
+    rows.push([school, teacher, cat, date, '"' + desc + '"', photos, video, videolink, time]);
+  });
+
+  // Build CSV string with BOM for Excel UTF-8 support
+  var csv = '\uFEFF';
+  rows.forEach(function(r) {
+    csv += r.join(',') + '\n';
+  });
+
+  // Trigger download
+  var blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = '未来音乐坊_提交记录_' + new Date().toISOString().substring(0,10) + '.csv';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  toast('✅ 表单已导出！');
+}
+
+// ===== Summary Tabs =====
+function switchSummaryTab(tab) {
+  document.querySelectorAll('.summary-tab').forEach(function(t) { t.classList.remove('active'); });
+  document.querySelectorAll('.summary-panel').forEach(function(p) { p.classList.remove('active'); });
+  document.querySelector('.summary-tab[onclick*="' + tab + '"]').classList.add('active');
+  document.getElementById(tab === 'category' ? 'summaryCategory' : 'summarySchool').classList.add('active');
+}
+
+// ===== Category Summary (by month) =====
+function renderCategorySummary() {
+  var container = document.getElementById('summaryCategory');
+  if (!submissions.length) {
+    container.innerHTML = '<span style="color:var(--text-muted);font-size:13px;">暂无数据</span>';
+    return;
+  }
+
+  var cats = { teaching: { label: '🎵 教学', color: '#4FC3F7' },
+               rehearsal: { label: '🎤 排练', color: '#FFB74D' },
+               performance: { label: '🎭 表演', color: '#E57373' },
+               other: { label: '✨ 其他', color: '#BA68C8' } };
+
+  // Group by month first
+  var months = {};
+  submissions.forEach(function(s) {
+    var m = (s.activityDate || s.createdAt || '').substring(0, 7);
+    if (!m) m = '未知月份';
+    if (!months[m]) months[m] = { teaching: { count:0, photos:0, videos:0 }, rehearsal: { count:0, photos:0, videos:0 }, performance: { count:0, photos:0, videos:0 }, other: { count:0, photos:0, videos:0 }, schools: new Set() };
+    var cat = s.category || 'other';
+    if (!months[m][cat]) cat = 'other';
+    months[m][cat].count++;
+    months[m][cat].photos += (s.photos||[]).length;
+    if (s.video || s.videoLink) months[m][cat].videos++;
+    var schoolName = (s.schoolName||'').split('|')[0].trim();
+    if (schoolName) months[m].schools.add(schoolName);
+  });
+
+  var mKeys = Object.keys(months).sort().reverse();
+  var mOverallMax = 0;
+  mKeys.forEach(function(m) {
+    var total = Object.values(months[m]).reduce(function(sum, d) { return sum + (d.count||0); }, 0);
+    if (total > mOverallMax) mOverallMax = total;
+  });
+
+  container.innerHTML = '';
+  mKeys.forEach(function(m) {
+    var mData = months[m];
+    var mTotal = Object.keys(cats).reduce(function(sum, k) { return sum + (mData[k] ? mData[k].count : 0); }, 0);
+
+    var block = document.createElement('div');
+    block.style.cssText = 'margin-bottom:14px;';
+    block.innerHTML = '<div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:6px;">📅 ' + m + ' · ' + mTotal + '条 · 🏫' + mData.schools.size + '校</div>';
+
+    Object.keys(cats).forEach(function(k) {
+      var d = mData[k];
+      var pct = mTotal ? Math.round(d.count / mOverallMax * 100) : 0;
+      var row = document.createElement('div');
+      row.className = 'cat-row';
+      row.innerHTML =
+        '<div class="cat-label" style="font-size:12px;">' + cats[k].label + '</div>' +
+        '<div class="cat-bar-wrap"><div class="cat-bar" style="width:' + pct + '%;background:' + cats[k].color + ';"></div></div>' +
+        '<div class="cat-count" style="font-size:12px;">' + d.count + '条</div>' +
+        '<span style="font-size:11px;color:var(--text-light);">📷' + d.photos + ' 🎬' + d.videos + '</span>';
+      block.appendChild(row);
+    });
+    container.appendChild(block);
+  });
+}
+
+// ===== School Summary (by month) =====
+function renderSchoolSummary() {
+  var container = document.getElementById('summarySchool');
+  if (!submissions.length) {
+    container.innerHTML = '<span style="color:var(--text-muted);font-size:13px;">暂无数据</span>';
+    return;
+  }
+
+  // Group by month, then school
+  var months = {};
+  submissions.forEach(function(s) {
+    var m = (s.activityDate || s.createdAt || '').substring(0, 7);
+    if (!m) m = '未知月份';
+    if (!months[m]) months[m] = {};
+    var name = (s.schoolName||'').split('|')[0].trim();
+    if (!name) return;
+    if (!months[m][name]) months[m][name] = { count: 0, photos: 0, videos: 0 };
+    months[m][name].count++;
+    months[m][name].photos += (s.photos||[]).length;
+    if (s.video || s.videoLink) months[m][name].videos++;
+  });
+
+  var mKeys = Object.keys(months).sort().reverse();
+  // Global max for bar scaling
+  var globalMax = 0;
+  mKeys.forEach(function(m) {
+    Object.values(months[m]).forEach(function(d) { if (d.count > globalMax) globalMax = d.count; });
+  });
+
+  container.innerHTML = '';
+  mKeys.forEach(function(m) {
+    var mData = months[m];
+    var sorted = Object.entries(mData).sort(function(a, b) { return b[1].count - a[1].count; });
+    var mTotal = sorted.reduce(function(sum, e) { return sum + e[1].count; }, 0);
+
+    var block = document.createElement('div');
+    block.style.cssText = 'margin-bottom:14px;';
+    block.innerHTML = '<div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:6px;">📅 ' + m + ' · ' + mTotal + '条 · ' + sorted.length + '校</div>';
+
+    sorted.forEach(function(entry) {
+      var name = entry[0], d = entry[1];
+      var pct = globalMax ? Math.round(d.count / globalMax * 100) : 0;
+      var row = document.createElement('div');
+      row.className = 'school-row';
+      row.innerHTML =
+        '<div class="sch-label" style="font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:140px;" title="' + name + '">' + name + '</div>' +
+        '<div class="sch-bar-wrap"><div class="sch-bar" style="width:' + pct + '%;background:var(--secondary);"></div></div>' +
+        '<div class="sch-count" style="font-size:12px;">' + d.count + '条</div>' +
+        '<span style="font-size:11px;color:var(--text-light);">📷' + d.photos + ' 🎬' + d.videos + '</span>';
+      block.appendChild(row);
+    });
+    container.appendChild(block);
+  });
+}
+
+// ===== ZIP Download Helpers =====
+function getRowAttachmentUrls(rowIndex) {
+  var s = submissions[rowIndex];
+  var urls = [];
+  var name = ((s.schoolName||'').split('|')[0].trim() || 'unknown').replace(/[\/:*?"<>|]/g, '_');
+  var teacher = ((s.teacherName||'').replace(/[\/:*?"<>|]/g, '_'));
+  var prefix = name + (teacher ? '_' + teacher : '');
+
+  if (s.photos && s.photos.length) {
+    s.photos.forEach(function(p, idx) {
+      if (p.url) urls.push({ url: p.url, name: prefix + '_photo' + (idx+1) + '.jpg' });
+    });
+  }
+  if (s.video && s.video.url) {
+    var ext = '.mp4';
+    if (s.video.name) {
+      var dot = s.video.name.lastIndexOf('.');
+      if (dot > 0) ext = s.video.name.substring(dot);
+    }
+    urls.push({ url: s.video.url, name: prefix + '_video' + ext });
+  }
+  return urls;
+}
+
+async function downloadRowZip(rowIndex) {
+  toast('正在打包附件...');
+  var urls = getRowAttachmentUrls(rowIndex);
+  if (!urls.length) { toast('此条记录没有附件'); return; }
+
+  var zip = new JSZip();
+  var folder = zip.folder(urls[0].name.replace(/_.*/, ''));
+
+  try {
+    for (var i = 0; i < urls.length; i++) {
+      var item = urls[i];
+      var resp = await fetch(item.url, { mode: 'cors' });
+      if (resp.ok) {
+        var blob = await resp.blob();
+        folder.file(item.name, blob);
+      }
+    }
+    var zipBlob = await zip.generateAsync({ type: 'blob' });
+    var url = URL.createObjectURL(zipBlob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = urls[0].name.replace(/_.*/, '') + '_附件.zip';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    toast('✅ 下载完成！');
+  } catch(e) {
+    toast('打包失败：' + e.message + '（可能是跨域限制，请尝试逐个下载）');
+  }
+}
+
+async function downloadAllAttachments() {
+  toast('正在打包全部附件，请稍候...');
+  var allUrls = [];
+  submissions.forEach(function(s, idx) {
+    allUrls = allUrls.concat(getRowAttachmentUrls(idx));
+  });
+
+  if (!allUrls.length) { toast('没有附件可下载'); return; }
+
+  var btn = document.getElementById('zipAllBtn');
+  btn.disabled = true;
+  btn.textContent = '⏳ 打包中...';
+
+  var zip = new JSZip();
+
+  try {
+    var batchSize = 10;
+    for (var i = 0; i < allUrls.length; i += batchSize) {
+      var batch = allUrls.slice(i, i + batchSize);
+      var results = await Promise.all(batch.map(async function(item) {
+        try {
+          var resp = await fetch(item.url, { mode: 'cors' });
+          if (resp.ok) return { name: item.name, blob: await resp.blob() };
+        } catch(e) {}
+        return null;
+      }));
+      results.forEach(function(r) {
+        if (r) zip.file(r.name, r.blob);
+      });
+    }
+
+    var zipBlob = await zip.generateAsync({ type: 'blob' });
+    var url = URL.createObjectURL(zipBlob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = '未来音乐坊_全部附件_' + new Date().toISOString().substring(0,10) + '.zip';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    toast('✅ 全部附件打包完成！');
+  } catch(e) {
+    toast('打包失败：' + e.message + '（可能跨域限制）');
+  }
+
+  btn.disabled = false;
+  btn.textContent = '📦 打包全部附件';
+}
+</script>
+</body>
+</html>
