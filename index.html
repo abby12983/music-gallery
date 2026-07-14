@@ -1,0 +1,1002 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>未来音乐坊 · 各校教学风采共享</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap');
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --primary: #FF6B6B;
+      --primary-light: #FFE8E8;
+      --secondary: #4ECDC4;
+      --accent: #FFD93D;
+      --bg: #FAFBFE;
+      --card-bg: #FFFFFF;
+      --text: #2D3436;
+      --text-light: #636E72;
+      --text-muted: #B2BEC3;
+      --shadow: 0 2px 16px rgba(0,0,0,0.06);
+      --shadow-hover: 0 8px 30px rgba(0,0,0,0.12);
+      --radius: 16px;
+    }
+
+    body {
+      font-family: 'Noto Sans SC', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ===== Header ===== */
+    .header {
+      background: linear-gradient(135deg, #FF6B6B 0%, #4ECDC4 50%, #FFD93D 100%);
+      padding: 0;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .header::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      right: -20%;
+      width: 600px;
+      height: 600px;
+      background: rgba(255,255,255,0.08);
+      border-radius: 50%;
+    }
+
+    .header::after {
+      content: '';
+      position: absolute;
+      bottom: -30%;
+      left: -10%;
+      width: 400px;
+      height: 400px;
+      background: rgba(255,255,255,0.05);
+      border-radius: 50%;
+    }
+
+    .header-content {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 48px 24px 56px;
+      position: relative;
+      z-index: 1;
+      text-align: center;
+    }
+
+    .badge {
+      display: inline-block;
+      background: rgba(255,255,255,0.25);
+      backdrop-filter: blur(10px);
+      padding: 6px 20px;
+      border-radius: 30px;
+      color: white;
+      font-size: 13px;
+      font-weight: 500;
+      margin-bottom: 16px;
+      letter-spacing: 1px;
+    }
+
+    .header h1 {
+      color: white;
+      font-size: clamp(28px, 5vw, 42px);
+      font-weight: 700;
+      margin-bottom: 12px;
+      text-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+
+    .header p {
+      color: rgba(255,255,255,0.9);
+      font-size: clamp(14px, 2.5vw, 17px);
+      max-width: 600px;
+      margin: 0 auto;
+      font-weight: 300;
+    }
+
+    .stats-bar {
+      display: flex;
+      justify-content: center;
+      gap: 40px;
+      margin-top: 28px;
+      flex-wrap: wrap;
+    }
+
+    .stat-item {
+      text-align: center;
+      color: white;
+    }
+
+    .stat-number {
+      font-size: 32px;
+      font-weight: 700;
+      line-height: 1;
+    }
+
+    .stat-label {
+      font-size: 13px;
+      opacity: 0.85;
+      margin-top: 4px;
+    }
+
+    /* ===== Filter Bar ===== */
+    .filter-bar {
+      max-width: 1200px;
+      margin: -24px auto 0;
+      padding: 0 24px;
+      position: relative;
+      z-index: 10;
+    }
+
+    .filter-inner {
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .filter-label {
+      font-size: 14px;
+      color: var(--text-light);
+      font-weight: 500;
+      white-space: nowrap;
+    }
+
+    .filter-btn {
+      padding: 8px 20px;
+      border-radius: 24px;
+      border: 1.5px solid #E8ECF0;
+      background: white;
+      color: var(--text-light);
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      font-family: inherit;
+      white-space: nowrap;
+    }
+
+    .filter-btn:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+
+    .filter-btn.active {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: white;
+    }
+
+    .filter-btn .emoji {
+      margin-right: 4px;
+    }
+
+    .upload-hint {
+      margin-left: auto;
+      font-size: 13px;
+      color: var(--text-muted);
+      white-space: nowrap;
+    }
+
+    .upload-hint a {
+      color: var(--primary);
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    /* ===== School Grid ===== */
+    .container {
+      max-width: 1200px;
+      margin: 32px auto 0;
+      padding: 0 24px 60px;
+    }
+
+    .school-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+      gap: 24px;
+    }
+
+    /* ===== School Card ===== */
+    .school-card {
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      transition: all 0.3s ease;
+      animation: fadeInUp 0.5s ease forwards;
+      opacity: 0;
+    }
+
+    .school-card:hover {
+      box-shadow: var(--shadow-hover);
+      transform: translateY(-4px);
+    }
+
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .card-cover {
+      height: 130px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card-cover img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .card-cover-overlay {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 20px 24px;
+      background: linear-gradient(135deg, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.15) 100%);
+      color: white;
+    }
+
+    .card-cover-name {
+      font-size: 20px;
+      font-weight: 700;
+      line-height: 1.3;
+      text-shadow: 0 1px 4px rgba(0,0,0,0.3);
+    }
+
+    .card-cover-region {
+      font-size: 12px;
+      opacity: 0.9;
+      margin-top: 4px;
+    }
+
+    .card-body {
+      padding: 16px 20px 20px;
+    }
+
+    .card-teacher {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .teacher-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+
+    .teacher-info {
+      font-size: 14px;
+    }
+
+    .teacher-name {
+      font-weight: 500;
+    }
+
+    .teacher-role {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .card-tags {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+
+    .tag {
+      padding: 4px 12px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .tag-teaching { background: #E3F2FD; color: #1565C0; }
+    .tag-rehearsal { background: #FFF3E0; color: #E65100; }
+    .tag-performance { background: #FCE4EC; color: #C62828; }
+    .tag-other { background: #F3E5F5; color: #6A1B9A; }
+
+    /* ===== Gallery Grid in Card ===== */
+    .gallery-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+    }
+
+    .gallery-item {
+      position: relative;
+      aspect-ratio: 1;
+      border-radius: 10px;
+      overflow: hidden;
+      cursor: pointer;
+      background: #F0F2F5;
+    }
+
+    .gallery-item img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.3s ease;
+    }
+
+    .gallery-item:hover img {
+      transform: scale(1.05);
+    }
+
+    .gallery-item .play-icon {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 40px;
+      height: 40px;
+      background: rgba(0,0,0,0.5);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .gallery-item .play-icon::after {
+      content: '';
+      width: 0;
+      height: 0;
+      border-left: 14px solid white;
+      border-top: 9px solid transparent;
+      border-bottom: 9px solid transparent;
+      margin-left: 3px;
+    }
+
+    .gallery-more {
+      position: relative;
+      aspect-ratio: 1;
+      border-radius: 10px;
+      background: #F0F2F5;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      color: var(--text-light);
+      font-weight: 500;
+    }
+
+    .card-empty {
+      text-align: center;
+      padding: 24px;
+      color: var(--text-muted);
+      font-size: 14px;
+    }
+
+    .card-empty .empty-icon {
+      font-size: 36px;
+      margin-bottom: 8px;
+    }
+
+    .card-empty .empty-hint {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    .card-empty-with-link {
+      text-align: center;
+      padding: 24px;
+      color: var(--text-light);
+      font-size: 14px;
+    }
+
+    .card-empty-with-link .empty-icon {
+      font-size: 36px;
+      margin-bottom: 8px;
+    }
+
+    .card-empty-with-link a {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 12px;
+      padding: 8px 18px;
+      background: var(--primary);
+      color: white;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 500;
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+
+    .card-empty-with-link a:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(255,107,107,0.35);
+    }
+
+    /* ===== Activity List (text-only items) ===== */
+    .activity-list {
+      margin-top: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .activity-item {
+      background: #F8F9FC;
+      border-radius: 10px;
+      padding: 12px 14px;
+      border-left: 3px solid var(--primary);
+    }
+
+    .activity-item .activity-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 4px;
+    }
+
+    .activity-item .activity-date {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+
+    .activity-item .activity-desc {
+      font-size: 13px;
+      color: var(--text-light);
+      line-height: 1.5;
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .activity-item .media-hint {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      margin-top: 8px;
+      font-size: 11px;
+      color: var(--primary);
+      font-weight: 500;
+      text-decoration: none;
+      cursor: pointer;
+    }
+
+    .activity-item .media-hint:hover {
+      opacity: 0.8;
+    }
+
+    .view-sheet-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      margin-top: 8px;
+      padding: 6px 14px;
+      background: var(--primary-light);
+      color: var(--primary);
+      border-radius: 16px;
+      font-size: 12px;
+      font-weight: 500;
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+
+    .view-sheet-link:hover {
+      background: var(--primary);
+      color: white;
+    }
+
+    /* ===== Lightbox ===== */
+    .lightbox {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.9);
+      z-index: 1000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .lightbox.active {
+      display: flex;
+    }
+
+    .lightbox img,
+    .lightbox video {
+      max-width: 90%;
+      max-height: 90vh;
+      border-radius: 8px;
+    }
+
+    .lightbox-close {
+      position: absolute;
+      top: 20px; right: 24px;
+      color: white;
+      font-size: 32px;
+      cursor: pointer;
+      width: 44px; height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255,255,255,0.1);
+      border-radius: 50%;
+      transition: background 0.2s;
+    }
+
+    .lightbox-close:hover {
+      background: rgba(255,255,255,0.25);
+    }
+
+    /* ===== Upload CTA ===== */
+    .upload-cta {
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 40px;
+      text-align: center;
+      margin-top: 40px;
+    }
+
+    .upload-cta h3 {
+      font-size: 20px;
+      margin-bottom: 12px;
+    }
+
+    .upload-cta p {
+      color: var(--text-light);
+      font-size: 14px;
+      max-width: 500px;
+      margin: 0 auto 20px;
+    }
+
+    .upload-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 14px 32px;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      color: white;
+      border: none;
+      border-radius: 30px;
+      font-size: 16px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+      font-family: inherit;
+      text-decoration: none;
+    }
+
+    .upload-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(255,107,107,0.35);
+    }
+
+    /* ===== Footer ===== */
+    .footer {
+      text-align: center;
+      padding: 32px 24px;
+      color: var(--text-muted);
+      font-size: 13px;
+    }
+
+    .footer a {
+      color: var(--primary);
+      text-decoration: none;
+    }
+
+    /* ===== Responsive ===== */
+    @media (max-width: 768px) {
+      .school-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .stats-bar {
+        gap: 24px;
+      }
+
+      .filter-inner {
+        padding: 12px 16px;
+      }
+
+      .upload-hint {
+        display: none;
+      }
+
+      .header-content {
+        padding: 36px 20px 44px;
+      }
+    }
+
+    /* ===== Scrollbar ===== */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-thumb { background: #DDD; border-radius: 3px; }
+  </style>
+<script src="https://beacon.cdn.qq.com/sdk/4.5.9/beacon_web.min.js"></script>
+<script>
+(function(){
+  try{
+    var beacon=new BeaconAction({
+      appkey:'0WEB06U85YBSLJNL',
+      versionCode:'1.0.0',
+      channelID:'share',
+      delay:1000,
+      sessionDuration:30*60*1000,
+      isOversea:false,
+      needReportRqdEvent:false
+    });
+    beacon.onDirectUserAction('preview_page_view',{
+      'url':location.href,
+      'referrer':document.referrer,
+      'title':document.title,
+      'sandbox_id':'84fe0ee68eb14cfc82a65f51d109b912'
+    });
+  }catch(e){}
+})();
+</script></head>
+<body>
+
+  <!-- Header -->
+  <header class="header">
+    <div class="header-content">
+      <div class="badge">AI + 音乐教育公益项目</div>
+      <h1>未来音乐坊 · 教学风采共享</h1>
+      <p>24所项目学校的教学、排练、表演精彩瞬间，各校共享学习、共同成长</p>
+      <div class="stats-bar">
+        <div class="stat-item">
+          <div class="stat-number" id="stat-schools">24</div>
+          <div class="stat-label">项目学校</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-number" id="stat-photos">0</div>
+          <div class="stat-label">精彩照片</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-number" id="stat-videos">0</div>
+          <div class="stat-label">视频记录</div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Filter Bar -->
+  <div class="filter-bar">
+    <div class="filter-inner">
+      <span class="filter-label">筛选：</span>
+      <button class="filter-btn active" data-filter="all">全部</button>
+      <button class="filter-btn" data-filter="teaching"><span class="emoji">🎵</span>课堂教学</button>
+      <button class="filter-btn" data-filter="rehearsal"><span class="emoji">🎤</span>合唱排练</button>
+      <button class="filter-btn" data-filter="performance"><span class="emoji">🎭</span>交流表演</button>
+      <button class="filter-btn" data-filter="other"><span class="emoji">📷</span>其他风采</button>
+      <span class="upload-hint">📎 老师上传素材 → <a href="teacher.html" target="_blank">点击上传</a></span>
+    </div>
+  </div>
+
+  <!-- Content -->
+  <div class="container">
+    <div class="school-grid" id="schoolGrid"></div>
+
+    <!-- Upload CTA -->
+    <div class="upload-cta">
+      <h3>🌟 分享你学校的教学风采</h3>
+      <p>老师们可以将课堂、排练、表演的照片和视频上传，让更多人看到孩子们的音乐梦想！</p>
+      <a href="teacher.html" target="_blank" class="upload-btn">
+        📤 前往上传页面
+      </a>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <p>未来音乐坊公益项目 · 深圳市妇女儿童发展基金会</p>
+    <p style="margin-top:4px;">用AI点亮乡村音乐梦想 🎵</p>
+  </footer>
+
+  <!-- Lightbox -->
+  <div class="lightbox" id="lightbox">
+    <div class="lightbox-close" onclick="closeLightbox()">✕</div>
+    <div id="lightboxContent"></div>
+  </div>
+
+  <script src="data.js"></script>
+  <script>
+    const grid = document.getElementById('schoolGrid');
+    const TAG_MAP = {
+      teaching:     { label: '🎵 课堂教学', cls: 'tag-teaching' },
+      rehearsal:    { label: '🎤 合唱排练', cls: 'tag-rehearsal' },
+      performance:   { label: '🎭 交流表演', cls: 'tag-performance' },
+      other:        { label: '📷 其他风采', cls: 'tag-other' }
+    };
+
+    let currentFilter = 'all';
+    let totalPhotos = 0;
+    let totalVideos = 0;
+    let totalSchools = SCHOOLS_DATA.length;
+    let liveSchoolsData = JSON.parse(JSON.stringify(SCHOOLS_DATA));
+
+    function getGradient(school) {
+      if (school.gradient) return school.gradient;
+      const gradients = [
+        'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+        'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+        'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+        'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
+        'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
+        'linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%)',
+        'linear-gradient(135deg, #fccb90 0%, #d57eeb 100%)',
+        'linear-gradient(135deg, #f6d365 0%, #fda085 100%)',
+      ];
+      let hash = 0;
+      for (let i = 0; i < school.name.length; i++) hash = school.name.charCodeAt(i) + ((hash << 5) - hash);
+      return gradients[Math.abs(hash) % gradients.length];
+    }
+
+    async function fetchSubmissions() {
+      try {
+        const resp = await fetch('/api/submissions');
+        const data = await resp.json();
+        if (!data.success || !data.submissions.length) return;
+
+        var submissionMap = {};
+        data.submissions.forEach(function(sub) {
+          var schoolName = sub.schoolName;
+          var teacherName = '';
+          if (schoolName.indexOf('|') > -1) {
+            var parts = schoolName.split('|');
+            schoolName = parts[0].trim();
+            teacherName = parts[1] ? parts[1].trim() : '';
+          }
+
+          if (!submissionMap[schoolName]) {
+            submissionMap[schoolName] = { teacher: teacherName, items: [] };
+          }
+          if (teacherName && !submissionMap[schoolName].teacher) {
+            submissionMap[schoolName].teacher = teacherName;
+          }
+
+          var images = (sub.photos || []).map(function(p) { return p.url; });
+          var videoUrl = sub.videoLink || (sub.video ? sub.video.url : '');
+
+          submissionMap[schoolName].items.push({
+            type: sub.category,
+            title: (TAG_MAP[sub.category] ? TAG_MAP[sub.category].label : sub.category) + ' · ' + (sub.activityDesc || '').substring(0, 30),
+            date: sub.activityDate,
+            description: sub.activityDesc || '',
+            videoLink: sub.videoLink || '',
+            images: images,
+            videoUrl: videoUrl
+          });
+        });
+
+        // Merge submissions into school data
+        liveSchoolsData = SCHOOLS_DATA.map(function(school) {
+          var sub = submissionMap[school.name];
+          if (!sub) return school;
+          return {
+            id: school.id,
+            name: school.name,
+            region: school.region,
+            teacher: school.teacher || sub.teacher,
+            gradient: school.gradient,
+            sheetUrl: school.sheetUrl,
+            items: sub.items.concat(school.items)
+          };
+        });
+
+        console.log('[Gallery] Loaded ' + data.submissions.length + ' submissions across ' + Object.keys(submissionMap).length + ' schools');
+      } catch (err) {
+        console.warn('[Gallery] Failed to fetch submissions, using static data:', err.message);
+      }
+    }
+
+    function renderCards() {
+      grid.innerHTML = '';
+      totalPhotos = 0;
+      totalVideos = 0;
+
+      var filteredData = liveSchoolsData.filter(function(school) {
+        if (currentFilter === 'all') return true;
+        return school.items.some(function(item) { return item.type === currentFilter; });
+      });
+
+      // Count active schools (those with content)
+      var activeSchools = liveSchoolsData.filter(function(s) { return s.items.length > 0; }).length;
+
+      filteredData.forEach(function(school, index) {
+        var filteredItems = currentFilter === 'all'
+          ? school.items
+          : school.items.filter(function(item) { return item.type === currentFilter; });
+
+        var tags = [];
+        school.items.forEach(function(i) {
+          if (tags.indexOf(i.type) === -1) tags.push(i.type);
+        });
+
+        var card = document.createElement('div');
+        card.className = 'school-card';
+        card.style.animationDelay = (index * 0.08) + 's';
+
+        var galleryHTML = '';
+        var allImages = [];
+        var allVideos = [];
+
+        filteredItems.forEach(function(item) {
+          if (item.images) {
+            item.images.forEach(function(img) {
+              allImages.push({ src: img, title: item.title, type: 'image' });
+            });
+          }
+          if (item.videoUrl) {
+            allVideos.push({ src: item.videoUrl, title: item.title, type: 'video' });
+          }
+        });
+
+        totalPhotos += allImages.length;
+        totalVideos += allVideos.length;
+
+        if (allImages.length > 0 || allVideos.length > 0) {
+          galleryHTML = '<div class="gallery-grid">';
+          var allMedia = allImages.concat(allVideos);
+          var maxShow = 6;
+          allMedia.slice(0, maxShow).forEach(function(media) {
+            if (media.type === 'video') {
+              galleryHTML +=
+                '<div class="gallery-item" onclick="openVideo(\'' + media.src.replace(/'/g, "\\'") + '\')">' +
+                '<div style="width:100%;height:100%;background:' + getGradient(school) + ';display:flex;align-items:center;justify-content:center;font-size:24px;">🎬</div>' +
+                '<div class="play-icon"></div>' +
+                '</div>';
+            } else {
+              galleryHTML +=
+                '<div class="gallery-item" onclick="openImage(\'' + media.src.replace(/'/g, "\\'") + '\')">' +
+                '<img src="' + media.src + '" alt="' + media.title + '" loading="lazy" onerror="this.style.opacity=\'0\'">' +
+                '</div>';
+            }
+          });
+          if (allMedia.length > maxShow) {
+            galleryHTML += '<div class="gallery-more">+' + (allMedia.length - maxShow) + '</div>';
+          }
+          galleryHTML += '</div>';
+        }
+
+        // Text-only items (descriptions without media)
+        var textItems = filteredItems.filter(function(i) {
+          return i.description && (!i.images || i.images.length === 0) && !i.videoUrl;
+        });
+        if (textItems.length > 0) {
+          galleryHTML += '<div class="activity-list">';
+          textItems.forEach(function(item) {
+            var tagInfo = TAG_MAP[item.type] || { label: item.type, cls: 'tag-other' };
+            galleryHTML +=
+              '<div class="activity-item">' +
+              '<div class="activity-title">' + tagInfo.label + ' · ' + (item.title || '活动记录') + '</div>' +
+              (item.date ? '<div class="activity-date">📅 ' + item.date + '</div>' : '') +
+              '<div class="activity-desc">' + item.description + '</div>' +
+              '</div>';
+          });
+          galleryHTML += '</div>';
+        }
+
+        // Empty state
+        if (allImages.length === 0 && allVideos.length === 0 && textItems.length === 0) {
+          galleryHTML =
+            '<div class="card-empty">' +
+            '<div class="empty-icon">📸</div>' +
+            '<div>暂无风采展示</div>' +
+            '<div class="empty-hint">老师上传后将在这里展示</div>' +
+            '</div>';
+        }
+
+        var tagHTML = tags.map(function(t) {
+          return '<span class="tag ' + (TAG_MAP[t] ? TAG_MAP[t].cls : 'tag-other') + '">' + (TAG_MAP[t] ? TAG_MAP[t].label : t) + '</span>';
+        }).join('');
+
+        var coverStyle = getGradient(school);
+
+        card.innerHTML =
+          '<div class="card-cover" style="background: ' + coverStyle + ';">' +
+          '<div class="card-cover-overlay">' +
+          '<div class="card-cover-name">' + school.name + '</div>' +
+          '<div class="card-cover-region">📍 ' + school.region + '</div>' +
+          '</div>' +
+          '</div>' +
+          '<div class="card-body">' +
+          '<div class="card-teacher">' +
+          '<div class="teacher-avatar">👩‍🏫</div>' +
+          '<div class="teacher-info">' +
+          '<div class="teacher-name">' + (school.teacher || '项目学校教师') + '</div>' +
+          '<div class="teacher-role">项目学校教师</div>' +
+          '</div>' +
+          '</div>' +
+          '<div class="card-tags">' + tagHTML + '</div>' +
+          galleryHTML +
+          '</div>';
+
+        grid.appendChild(card);
+      });
+
+      document.getElementById('stat-photos').textContent = totalPhotos;
+      document.getElementById('stat-videos').textContent = totalVideos;
+
+      // Update schools count to show active schools
+      if (activeSchools > 0) {
+        document.getElementById('stat-schools').innerHTML = activeSchools;
+      }
+    }
+
+    // Filters
+    document.querySelectorAll('.filter-btn').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        document.querySelectorAll('.filter-btn').forEach(function(b) { b.classList.remove('active'); });
+        btn.classList.add('active');
+        currentFilter = btn.dataset.filter;
+        renderCards();
+      });
+    });
+
+    // Lightbox
+    function openImage(src) {
+      var lb = document.getElementById('lightbox');
+      document.getElementById('lightboxContent').innerHTML = '<img src="' + src + '" alt="Preview">';
+      lb.classList.add('active');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function openVideo(src) {
+      var lb = document.getElementById('lightbox');
+      // Check if it's an external URL (http/https) or local upload
+      if (src.indexOf('http') === 0) {
+        document.getElementById('lightboxContent').innerHTML = '<video src="' + src + '" controls autoplay style="max-width:90%;max-height:90vh;border-radius:8px;"></video>';
+      } else {
+        document.getElementById('lightboxContent').innerHTML = '<video src="' + src + '" controls autoplay style="max-width:90%;max-height:90vh;border-radius:8px;"></video>';
+      }
+      lb.classList.add('active');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeLightbox() {
+      var lb = document.getElementById('lightbox');
+      lb.classList.remove('active');
+      document.body.style.overflow = '';
+      var video = lb.querySelector('video');
+      if (video) video.pause();
+    }
+
+    document.getElementById('lightbox').addEventListener('click', function(e) {
+      if (e.target === e.currentTarget) closeLightbox();
+    });
+
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') closeLightbox();
+    });
+
+    // Init: first render with static data, then fetch & refresh
+    renderCards();
+
+    fetchSubmissions().then(function() {
+      renderCards();
+    });
+  </script>
+</body>
+</html>
