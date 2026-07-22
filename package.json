@@ -1,11 +1,14 @@
 {
-  "name": "gallery-serve",
+  "name": "music-gallery",
   "version": "1.0.0",
+  "description": "未来音乐坊·各校教学风采共享平台",
   "private": true,
+  "type": "module",
   "scripts": {
-    "start": "node server.js"
+    "build": "echo 'static site, no build step'"
   },
   "dependencies": {
-    "express": "^4.21.0"
+    "express": "^4.19.2",
+    "cos-nodejs-sdk-v5": "^2.13.0"
   }
 }
