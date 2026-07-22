@@ -199,9 +199,8 @@
 
 <script>
 // ===== Configuration =====
-var API    = '/api';
-var DIRECT_MAX = 2 * 1024 * 1024;  // Files <= 2MB: direct upload
-var CHUNK_SIZE  = 2 * 1024 * 1024; // Chunk size: 2MB (reduces chunk count, avoids OOM)
+var API    = '';
+var CHUNK_SIZE  = 4 * 1024 * 1024; // 保留兼容旧代码，实际已不需分块上传
 
 // ===== Schools (24所项目学校) =====
 var SCHOOLS = [
@@ -308,64 +307,49 @@ function readChunkAsDataURL(file, start, len) {
 }
 
 // ===== Upload logic =====
-// Direct upload (for small files <= 2MB)
-async function uploadDirect(file) {
+// 通过 Cloud Function 获取预签名 URL，然后浏览器直接 PUT 到 COS
+// 无 6MB 请求体限制，照片视频都能传
+async function uploadViaPresignedUrl(file, kind) {
   var sz = (file.size/1024/1024).toFixed(1);
-  setProgress('正在上传 ' + file.name + ' (' + sz + 'MB)...', 5);
-  var b64 = await readFileAsDataURL(file);
-  var d = await api('POST', '/api/upload-file', { fileName: file.name, fileData: b64 }, 120);
-  return d.file;
-}
 
-// Chunked upload (for large files > 2MB)
-async function uploadChunked(file) {
-  var totalChunks = Math.ceil(file.size / CHUNK_SIZE);
-  var sz = (file.size/1024/1024).toFixed(1);
-  setProgress('准备分块上传 ' + file.name + ' (' + sz + 'MB)...', 2);
-
-  // Start session
-  var s = await api('POST', '/api/chunked-upload/start', {
+  // 1) 获取预签名上传链接
+  var auth = await api('POST', '/api/upload-url', {
     fileName: file.name,
-    totalChunks: totalChunks
+    contentType: file.type || 'application/octet-stream',
+    kind: kind || (file.type.startsWith('video/') ? 'video' : 'photo')
   }, 30);
-  var sid = s.sessionId;
 
-  // Upload each chunk
-  for (var i = 0; i < totalChunks; i++) {
-    var pct = 2 + Math.round((i / totalChunks) * 80);
-    setProgress('正在上传 ' + file.name + ' 第 ' + (i+1) + '/' + totalChunks + ' 块...', pct);
-    
-    var b64 = await readChunkAsDataURL(file, i * CHUNK_SIZE, CHUNK_SIZE);
-    
-    for (var retry = 0; retry < 3; retry++) {
-      try {
-        await api('POST', '/api/chunked-upload/chunk', {
-          sessionId: sid,
-          chunkIndex: i,
-          data: b64
-        }, 60);
-        break;
-      } catch(e) {
-        if (retry === 2) throw e;
-        setProgress('重试第 ' + (i+1) + ' 块 (' + (retry+2) + '/3)...', pct);
-        await new Promise(function(r){setTimeout(r, 1000)});
+  // 2) 浏览器直接 PUT 文件到 COS（不经过 Cloud Function）
+  await new Promise(function(resolve, reject) {
+    var xhr = new XMLHttpRequest();
+    xhr.open('PUT', auth.uploadUrl, true);
+    xhr.setRequestHeader('Content-Type', file.type || 'application/octet-stream');
+    xhr.upload.onprogress = function(e) {
+      if (e.lengthComputable) {
+        var pct = Math.round(e.loaded / e.total * 100);
+        setProgress('正在上传 ' + file.name + ' (' + sz + 'MB) ' + pct + '%', pct);
       }
-    }
-  }
+    };
+    xhr.onload = function() {
+      if (xhr.status >= 200 && xhr.status < 300) resolve();
+      else reject(new Error('上传失败 HTTP ' + xhr.status));
+    };
+    xhr.onerror = function() { reject(new Error('网络错误')); };
+    xhr.ontimeout = function() { reject(new Error('上传超时')); };
+    xhr.timeout = 10 * 60 * 1000; // 10 分钟
+    xhr.send(file);
+  });
 
-  // Complete
-  setProgress('正在保存 ' + file.name + '...', 90);
-  var c = await api('POST', '/api/chunked-upload/complete', { sessionId: sid }, 120);
-  return c.file;
+  return {
+    name: file.name,
+    key: auth.key,
+    url: auth.publicUrl,
+  };
 }
 
-// Auto-select upload method
+// 简化入口：所有文件走预签名直传
 async function uploadFile(file) {
-  if (file.size <= DIRECT_MAX) {
-    return await uploadDirect(file);
-  } else {
-    return await uploadChunked(file);
-  }
+  return await uploadViaPresignedUrl(file);
 }
 
 // ===== Photo UI =====
@@ -471,13 +455,13 @@ async function doSubmit() {
     for (var i = 0; i < photoFiles.length; i++) {
       setProgress('正在上传第 ' + (i+1) + ' 张照片...', 5 + Math.round((i/photoFiles.length) * 25));
       var r = await uploadFile(photoFiles[i]);
-      photos.push({ name: r.name, fileID: r.fileID, url: r.url });
+      photos.push({ name: r.name, key: r.key, url: r.url });
     }
 
     // Upload video
     if (videoFile) {
       var v = await uploadFile(videoFile);
-      video = { name: v.name, fileID: v.fileID, url: v.url };
+      video = { name: v.name, key: v.key, url: v.url };
       setProgress('视频上传完成!', 85);
     }
 
