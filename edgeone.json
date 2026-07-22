@@ -1,0 +1,8 @@
+{
+  "mainlandRegions": ["ap-guangzhou"],
+  "overseasRegions": [],
+  "build": {
+    "command": "",
+    "outputDir": "."
+  }
+}
